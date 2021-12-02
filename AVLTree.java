@@ -16,7 +16,12 @@ public class AVLTree {
    *
    */
   public boolean empty() {
-    return false; // to be replaced by student code
+	  if (getRoot() == null) {
+		  return true;
+	  }
+	  else {
+		  return false;
+	  }
   }
 
  /**
@@ -40,8 +45,102 @@ public class AVLTree {
    * Returns -1 if an item with key k already exists in the tree.
    */
    public int insert(int k, String i) {
-	  return 420;	// to be replaced by student code
+	  IAVLNode new_node = AVLNode(k, i);
+	  IAVLNode r = this.getRoot(); 
+	  while (true) {
+		  int current_node_key = r.getKey();
+		  if (r.getKey() == k) {
+			  return -1;
+		  }
+		  if (r.getKey() > k) {
+			  if (r.getLeft() == null) {
+				  r.setLeft(new_node);
+				  r = r.getLeft();
+				  break;
+			  }
+			  r = r.getLeft();
+		  }
+		  if (r.getKey() < k) {
+			  if (r.getRight() == null) {
+				  r.setRight(new_node);
+				  r = r.getRight();
+				  break;
+			  }
+			  r = r.getRight();
+		  }
+	  }
+	  int right_rank_difference;
+	  int left_rank_difference;
+	  int rebalancing_action_counter = 0;
+	  while(r.getParent() != null) {
+		  r = r.getParent();
+		  right_rank_difference = r.getHeight() - r.getRight().getHeight(); 
+		  left_rank_difference = r.getHeight() - r.getLeft().getHeight(); 
+		  boolean one_and_two_state = (right_rank_difference == 1)&&(left_rank_difference == 2);
+		  boolean two_and_one_state = (right_rank_difference == 2)&&(left_rank_difference == 1);
+		  boolean one_and_one_state = (right_rank_difference == 1)&&(left_rank_difference == 1);
+		  boolean zero_and_two_state = (right_rank_difference == 0)&&(left_rank_difference == 2);
+		  boolean two_and_zero_state = (right_rank_difference == 2)&&(left_rank_difference == 0);
+		  if (one_and_two_state||two_and_one_state||one_and_one_state) { //Tree is fixed.
+			  break;
+		  }
+		  if (right_rank_difference + left_rank_difference == 1){ //If one rank difference is 1 and the other is 0.
+			  r.setHeight(r.getHeight() + 1);
+			  rebalancing_action_counter += 1;
+			  continue;
+		  }
+		  if (two_and_zero_state) {
+			  if (r.getLeft().getHeight() - r.getLeft().getRight().getHeight() == 2){
+				  rotation(r, 'r'); //Making a single rotation, and afterwards changing ranks accordingly.
+				  r.setHeight(r.getHeight() - 1);
+				  rebalancing_action_counter += 1;
+			  }
+			  else { //If r.getLeft().getHeight() - r.getLeft().getRight().getHeight() == 1
+				  rotation(r.getLeft(), 'l'); //Making a double rotation, and afterwards changing ranks accordingly.
+				  rotation(r, 'r');
+				  r.setHeight(r.getHeight() - 1);
+				  r.getParent().setHeight(r.getParent().getHeight() + 1);
+				  r.getParent().getLeft().setHeight(r.getParent().getLeft().getHeight() - 1);
+				  rebalancing_action_counter += 2;
+			  }	  
+			  r = r.getParent();
+			  continue;
+		  }
+		  if (zero_and_two_state) {
+			  if (r.getRight().getHeight() - r.getRight().getLeft().getHeight() == 2){
+				  rotation(r, 'l'); //Making a single rotation, and afterwards changing ranks accordingly.
+				  r.setHeight(r.getHeight() - 1);
+				  r = r.getParent();
+				  rebalancing_action_counter += 1;
+			  }
+			  else { //If r.getRight().getHeight() - r.getRight().getLeft().getHeight() == 1
+				  rotation(r.getRight(), 'r'); //Making a double rotation, and afterwards changing ranks accordingly.
+				  rotation(r, 'l');
+				  r.setHeight(r.getHeight() - 1);
+				  r.getParent().setHeight(r.getParent().getHeight() + 1);
+				  r.getParent().getLeft().setHeight(r.getParent().getLeft().getHeight() - 1);
+				  rebalancing_action_counter += 2;
+			  }	
+			  r = r.getParent();
+		  }
+	  }
+	  return rebalancing_action_counter;
    }
+	  
+  private void rotation(IAVLNode local_root, char direction) {
+	  if (direction == 'r') {
+		  local_root.getLeft().setParent(local_root.getParent());
+		  local_root.setParent(local_root.getLeft());
+		  local_root.setLeft(local_root.getParent());
+		  local_root.getParent().setRight(local_root);
+	  }
+	  if (direction == 'l') {
+		  local_root.getLeft().setParent(local_root.getParent());
+		  local_root.setParent(local_root.getLeft());
+		  local_root.setLeft(local_root.getParent());
+		  local_root.getParent().setRight(local_root);
+	  }
+  }
 
   /**
    * public int delete(int k)
@@ -65,8 +164,18 @@ public class AVLTree {
     */
    public String min()
    {
-	   return "minDefaultString"; // to be replaced by student code
+	   IAVLNode r = this.getRoot();
+	   if (r == null){
+		   return null;
+	   }
+	   while(r.getLeft() != null) {
+		   r = r.getLeft();
+	   }
+	   return r.getValue();
    }
+	
+	   
+   
 
    /**
     * public String max()
@@ -86,9 +195,30 @@ public class AVLTree {
    * or an empty array if the tree is empty.
    */
   public int[] keysToArray()
-  {
-        return new int[33]; // to be replaced by student code
+  {	 
+	  int[] tree_keys = new int[size()];
+	  IAVLNode r = this.getRoot();
+	  return sorted_key_array(r);
   }
+  
+  public int[] sorted_key_array(IAVLNode r) {
+	  if (r == null){
+		  return new int[0] ;
+	  }
+	  int[] left_subtree_keys = sorted_key_array(r.getLeft());
+	  int[] right_subtree_keys = sorted_key_array(r.getRight());
+	  int new_array_size = 1 + left_subtree_keys.length + right_subtree_keys.length;
+	  int[] subtree_keys = new int[new_array_size];
+	  for (int i = 0; i < left_subtree_keys.length; i++) {
+		  subtree_keys[i] = left_subtree_keys[i];
+	  }
+	  subtree_keys[left_subtree_keys.length] = r.getKey();
+	  for (int i = 0; i < right_subtree_keys.length; i++) {
+		  subtree_keys[i + left_subtree_keys.length + 1] = left_subtree_keys[i];
+	  }
+	  return subtree_keys;
+  }
+  
 
   /**
    * public String[] infoToArray()
@@ -109,18 +239,37 @@ public class AVLTree {
     */
    public int size()
    {
-	   return 422; // to be replaced by student code
+	   IAVLNode r = this.getRoot();
+	   return node_counter(r);
    }
+   
+   public int node_counter(IAVLNode r) {
+	  int left_subtree_count = 0;
+	  int right_subtree_count = 0;
+	  int counter = 0;
+	  if (r != null) {
+		  counter = 1;
+	  }
+	  if (r.getLeft() != null){
+		  left_subtree_count = node_counter(r.getLeft());
+	  }
+	  if (r.getRight() != null){
+		  right_subtree_count = node_counter(r.getRight());
+	  }
+	  return counter + left_subtree_count + right_subtree_count;
+	  }
    
    /**
     * public int getRoot()
     *
     * Returns the root AVL node, or null if the tree is empty
     */
+   
    public IAVLNode getRoot()
    {
 	   return null;
    }
+   
    
    /**
     * public AVLTree[] split(int x)
@@ -147,7 +296,7 @@ public class AVLTree {
     */   
    public int join(IAVLNode x, AVLTree t)
    {
-	   return -1;
+	   return null;
    }
 
 	/** 
@@ -177,6 +326,12 @@ public class AVLTree {
     * This class can and MUST be modified (It must implement IAVLNode).
     */
   public class AVLNode implements IAVLNode{
+	  	private int key;
+	  	private int value;
+	  	public static AVLNode(int key, String value) {
+	  		this.key = key;
+	  		this.value = value;
+	  	}
 		public int getKey()
 		{
 			return 423; // to be replaced by student code
