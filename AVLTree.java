@@ -53,7 +53,7 @@ public class AVLTree {
 			  return -1;
 		  }
 		  if (r.getKey() > k) {
-			  if (r.getLeft() == null) {
+			  if (!(r.getLeft().isRealNode())) {
 				  r.setLeft(new_node);
 				  r = r.getLeft();
 				  break;
@@ -61,7 +61,7 @@ public class AVLTree {
 			  r = r.getLeft();
 		  }
 		  if (r.getKey() < k) {
-			  if (r.getRight() == null) {
+			  if (!(r.getRight().isRealNode())) {
 				  r.setRight(new_node);
 				  r = r.getRight();
 				  break;
@@ -69,6 +69,9 @@ public class AVLTree {
 			  r = r.getRight();
 		  }
 	  }
+	  r.setRight(new AVLNode(-1, 0, -1, r));
+	  r.SetLeft(new AVLNode(-1, 0, -1, r));
+	  
 	  int right_rank_difference;
 	  int left_rank_difference;
 	  int rebalancing_action_counter = 0;
@@ -93,7 +96,7 @@ public class AVLTree {
 			  if (r.getLeft().getHeight() - r.getLeft().getRight().getHeight() == 2){
 				  rotation(r, 'r'); //Making a single rotation, and afterwards changing ranks accordingly.
 				  r.setHeight(r.getHeight() - 1);
-				  rebalancing_action_counter += 1;
+				  rebalancing_action_counter += 2; //One for rotation and one for rank update.
 			  }
 			  else { //If r.getLeft().getHeight() - r.getLeft().getRight().getHeight() == 1
 				  rotation(r.getLeft(), 'l'); //Making a double rotation, and afterwards changing ranks accordingly.
@@ -101,7 +104,7 @@ public class AVLTree {
 				  r.setHeight(r.getHeight() - 1);
 				  r.getParent().setHeight(r.getParent().getHeight() + 1);
 				  r.getParent().getLeft().setHeight(r.getParent().getLeft().getHeight() - 1);
-				  rebalancing_action_counter += 2;
+				  rebalancing_action_counter += 4; //One for rotation and three for rank updates.
 			  }	  
 			  r = r.getParent();
 			  continue;
@@ -111,7 +114,7 @@ public class AVLTree {
 				  rotation(r, 'l'); //Making a single rotation, and afterwards changing ranks accordingly.
 				  r.setHeight(r.getHeight() - 1);
 				  r = r.getParent();
-				  rebalancing_action_counter += 1;
+				  rebalancing_action_counter += 2; //One for rotation and one for rank update.
 			  }
 			  else { //If r.getRight().getHeight() - r.getRight().getLeft().getHeight() == 1
 				  rotation(r.getRight(), 'r'); //Making a double rotation, and afterwards changing ranks accordingly.
@@ -119,7 +122,7 @@ public class AVLTree {
 				  r.setHeight(r.getHeight() - 1);
 				  r.getParent().setHeight(r.getParent().getHeight() + 1);
 				  r.getParent().getLeft().setHeight(r.getParent().getLeft().getHeight() - 1);
-				  rebalancing_action_counter += 2;
+				  rebalancing_action_counter += 4; //One for rotation and three for rank updates.
 			  }	
 			  r = r.getParent();
 		  }
@@ -161,6 +164,7 @@ public class AVLTree {
     *
     * Returns the info of the item with the smallest key in the tree,
     * or null if the tree is empty.
+    * 
     */
    public String min()
    {
@@ -282,7 +286,25 @@ public class AVLTree {
     */   
    public AVLTree[] split(int x)
    {
-	   return null; 
+	    IAVLNode r = getRoot();
+	    while(r.getKey() != x) {
+	    	if (r.getKey() > x) {
+	    		r = r.getLeft();
+	    	}
+	    	else {
+	    		r = r.getRight();
+	    	}
+	    }
+	    
+	    int array_size = 1;
+	    IAVLNode temp = r;
+	    while(temp.getParent() != null) {
+	    	temp = temp.getParent();
+	    	array_size += 1;
+	    }
+	    
+	    
+	    IAVLNode[] bigger_keys = new IAVLNode[];
    }
    
    /**
@@ -328,53 +350,65 @@ public class AVLTree {
   public class AVLNode implements IAVLNode{
 	  	private int key;
 	  	private int value;
-	  	public static AVLNode(int key, String value) {
+	  	private int height;
+	  	private IAVLNode left = null;
+	  	private IAVLNode right = null;
+	  	private IAVLNode parent = null;
+	  	  	
+	  	public AVLNode(int key, String value, int height, IAVLNode parent) {
 	  		this.key = key;
+	  		assert (!((key == -1)&&(height != -1)) && !((key != -1)&&(height == -1))); 
 	  		this.value = value;
+	  		this.height = height;
+	  		this.parent = parent;
 	  	}
-		public int getKey()
-		{
-			return 423; // to be replaced by student code
+	  	
+		public int getKey(){
+			return this.key;
 		}
+		
 		public String getValue()
 		{
-			return "getValueDefault"; // to be replaced by student code
+			if (this.key == -1) {
+				return null;
+			}
+			return this.value; // to be replaced by student code
 		}
 		public void setLeft(IAVLNode node)
 		{
-			return; // to be replaced by student code
+			this.left = node;
 		}
 		public IAVLNode getLeft()
 		{
-			return null; // to be replaced by student code
+			return this.left; 
 		}
 		public void setRight(IAVLNode node)
 		{
-			return; // to be replaced by student code
+			this.right = node;
 		}
 		public IAVLNode getRight()
 		{
-			return null; // to be replaced by student code
+			return this.right; 
 		}
 		public void setParent(IAVLNode node)
 		{
-			return; // to be replaced by student code
+			this.parent = node;
 		}
 		public IAVLNode getParent()
 		{
-			return null; // to be replaced by student code
+			return this.parent;
 		}
 		public boolean isRealNode()
 		{
-			return true; // to be replaced by student code
+			return this.key != -1; 
 		}
 	    public void setHeight(int height)
 	    {
-	      return; // to be replaced by student code
+	    	this.height = height;
 	    }
 	    public int getHeight()
 	    {
-	      return 424; // to be replaced by student code
+	      return this.height;
 	    }
   }
 
