@@ -8,7 +8,9 @@
  */
 
 public class AVLTree {
-	private IAVLNode root;
+	private IAVLNode root = new AVLNode(-1,null,-1,null,0);
+	private IAVLNode max_key_node = new AVLNode(-1,null,-1,null,0);
+	private IAVLNode min_key_node = new AVLNode(-1,null,-1,null,0);
 
   /**
    * public boolean empty()
@@ -28,9 +30,6 @@ public class AVLTree {
    */
   public String search(int k)
   {
-	if(root == null) {
-		return null;
-	}
 	IAVLNode x = root;
 	while(x.isRealNode()) {
 		int key = x.getKey();
@@ -97,9 +96,12 @@ public class AVLTree {
 	   if(!(r.isRealNode()) && !(l.isRealNode())) { // x is a leaf
 		   IAVLNode v = new AVLNode(-1,null,-1,p,0); // virtual node
 		   if(root == x) {
-			   root = v;
+			   root = v; // the parent of v is already null since p = root.getParent() = null
+			   // the root was the only real node in the tree, so we have to change max and min to point to the virtual node replacing it
+			   max_key_node = v;
+			   max_key_node = v;
 			   return 0;
-		   }
+		   } // x is not the root :
 		   if(p.getRight() == x) {
 			   p.setRight(v);
 		   }
@@ -107,12 +109,16 @@ public class AVLTree {
 			   p.setLeft(v);
 		   }
 		   n = balanceRec(p);
+		   max_key_node = Select(root, size() - 1);
+		   min_key_node = Select(root, 0);
 		   return n;
 	   }
 	   else if(!(r.isRealNode())) { // x has only one child, l
 		   if(root == x) {
 			   root = l;
 			   l.setParent(null);
+			   max_key_node = Select(root, size() - 1);
+			   min_key_node = Select(root, 0);
 			   return 0;
 		   }
 		   // x is not the root :
@@ -124,12 +130,16 @@ public class AVLTree {
 			   p.setLeft(l);
 			   }
 		   n = balanceRec(p);
+		   max_key_node = Select(root, size() - 1);
+		   min_key_node = Select(root, 0);
 		   return n;
 	   }
 	   else if(!(l.isRealNode())) { // x has only one child, r
 		   if(root == x) {
 			   root = r;
 			   r.setParent(null);
+			   max_key_node = Select(root, size() - 1);
+			   min_key_node = Select(root, 0);
 			   return 0;
 		   }
 		   // x is not the root : 
@@ -141,6 +151,8 @@ public class AVLTree {
 			   p.setLeft(r);
 			   }
 		   n = balanceRec(p);
+		   max_key_node = Select(root, size() - 1);
+		   min_key_node = Select(root, 0);
 		   return n;
 		   }
 	   
@@ -176,6 +188,8 @@ public class AVLTree {
 			   }
 		   }
 		   n = balanceRec(y_parent);
+		   max_key_node = Select(root, size() - 1);
+		   min_key_node = Select(root, 0);
 		   return n;
 	   }
 
@@ -205,6 +219,21 @@ public class AVLTree {
 	   }
    }
    
+   /**
+    * precondition : the tree is not empty, and 0 <= i <= size() -1
+    */
+   private IAVLNode Select(IAVLNode x, int i) { // return the i's element in the tree which has x as a root
+	   int r = x.getLeft().getSize();
+	   if(i == r) {
+		   return x;
+	   }
+	   else if(i < r) { // there are more than i elements which are smaller than x
+		   return Select(x.getLeft(), i); // so the i's element must be in its left subtree
+	   }
+	   else { // there are less than i elements which are smaller than x
+		   return Select(x.getRight(), i - r - 1); // so the i's element is the i-r-1 's element in the right subtree
+	   }
+   }
    
   private int balanceRec(IAVLNode v) {
 	  if(v == null) { // the parent of the root is null
@@ -288,6 +317,7 @@ public class AVLTree {
 	  }
 	  return 0; // never gets here
    }
+  
   private static int rankDiffCalc(IAVLNode x, IAVLNode y) {
 	  return x.getHeight() - y.getHeight();
   }
@@ -459,7 +489,111 @@ public class AVLTree {
     */   
    public int join(IAVLNode x, AVLTree t)
    {
-	   return -1;
+	   IAVLNode r = this.root;
+	   IAVLNode t_root = t.getRoot();
+	   if(!(r.isRealNode()) && !(t_root.isRealNode())) {
+		   this.root = x;
+		   x.setSize(1);
+		   x.setHeight(0); // x is a leaf
+		   x.setParent(null); // x is the root and has no parent
+		   IAVLNode v = new AVLNode(-1,null,-1,x,0); // virtual node
+		   x.setRight(v);
+		   IAVLNode w = new AVLNode(-1,null,-1,x,0); // virtual node
+		   x.setLeft(w);
+		   return 1;
+	   }
+	   if(!(r.isRealNode())) { // this is an empty tree but t is not empty
+		   t.insert_node(x); // Assuming insert_node updates max_key_node and min_key_node
+		   this.root = t.getRoot();
+		   this.min_key_node = t.getMinKey();
+		   this.max_key_node = t.getMaxKey();
+		   return this.root.getHeight() + 1 ;
+	   }
+	   if(!(t_root.isRealNode())) { // t is empty but this tree is not empty
+		   this.insert_node(x); // Assuming insert_node updates max_key_node and min_key_node
+		   return this.root.getHeight() + 1;
+	   }
+	   int t_height = t_root.getHeight();
+	   int h = r.getHeight();
+	   if(t_height >= h) { // if rank(t) >= this rank
+		   IAVLNode y = t_root;
+		   if(r.getKey() < x.getKey()) { // if keys(t) > x.getKey() > keys()
+			   // finding y such that y.getHeight <= this rank
+			   while(y.getHeight() > h) {
+				   y = y.getLeft(); 
+			   }
+			   join_case_one(x,r,y);
+		   }
+		   else { // rank(t) >= this tree's rank and keys(t) < x < keys()
+			   while(y.getHeight() > h) {
+				   y = y.getRight();
+			   }
+			   join_case_two(x,r,y);
+		   }
+		   x.setHeight(h + 1); // setting the rank of x
+		   this.root = t.getRoot(); // t is higher, so the root is now t.root
+		   this.rebalance(x);
+		   t.max_key_node = this.Select(root, size());
+		   t.min_key_node = this.Select(root, 0);
+		   return t_height - h + 1 ;
+	   }
+	   // rank(t) <= this rank :
+	   IAVLNode z = r;
+	   if(t_root.getKey() < x.getKey()) { // keys(t) < x.getKey() < keys()
+		   while(z.getHeight() > t_height) {
+			   z = z.getLeft();
+		   }
+		   join_case_one(x,t_root,z);
+	   }
+	   else {
+		   while(z.getHeight() > t_height) {
+			   z = z.getRight();
+		   }
+		   join_case_two(x,t_root,z);
+	   }
+	   x.setHeight(t_height + 1); // setting the rank of x
+	   this.rebalance(x); // this tree is higher so the root of the joined tree stays this.root
+	   t.max_key_node = this.Select(root, size());
+	   t.min_key_node = this.Select(root, 0);
+	   return h - t_height + 1 ;
+   }
+   /** 
+    * precondition: if b is in tree T and a in tree S then rank(T) >= rank(S) && keys(S) < x.getKey() < keys(T) && b.getHeight() <= a.getHeight()
+     */
+   private void join_case_one(IAVLNode x, IAVLNode a, IAVLNode b) {
+	   IAVLNode c = b.getParent(); 
+	  // make b the right child of x
+	   b.setParent(x);
+	   x.setRight(b);
+	   // make a the left child of x :
+	   a.setParent(x);
+	   x.setLeft(a);
+	   // make x the left child of c
+	   x.setParent(c);
+	   c.setLeft(x);
+   }
+   /**
+    * precondition: if b is in tree T and a is in tree S then rank(T) >= rank(S) && keys(S) > x.getKey() > keys(T) && b.getHeight() <= a.getHeight()
+    */
+   private void join_case_two(IAVLNode x, IAVLNode a, IAVLNode b) {
+	   IAVLNode c = b.getParent();
+	   // make b the left child of x :
+	   b.setParent(x);
+	   x.setLeft(b);
+	   // make a the right child of x :
+	   a.setParent(x);
+	   x.setRight(a);
+	   // make x the right child of c :
+	   x.setParent(c);
+	   c.setRight(x);
+   }
+   
+   public IAVLNode getMinKey() {
+	   return this.min_key_node;
+   }
+   
+   public IAVLNode getMaxKey() {
+	   return this.max_key_node;
    }
 
 	/** 
