@@ -426,7 +426,11 @@ public class AVLTree {
 		int COUNT = 10;
 	    // Base case
 	    if (!(node.IsRealNode()){
-	        return;
+	    	System.out.print("\n");
+		    for (int i = COUNT; i < space; i++)
+		        System.out.print(" ");
+		    System.out.print(node.getKey() + "\n");
+		    return;
 	    }
 	 
 	    // Increase distance between levels
@@ -440,7 +444,7 @@ public class AVLTree {
 	    System.out.print("\n");
 	    for (int i = COUNT; i < space; i++)
 	        System.out.print(" ");
-	    System.out.print(node.getValue() + "\n");
+	    System.out.print(node.getKey() + "\n");
 	 
 	    // Process left child
 	    print2DUtil(root.getLeft(), space);
