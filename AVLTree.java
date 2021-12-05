@@ -9,6 +9,8 @@
 
 public class AVLTree {
   private IAVLNode root;
+  private IAVLNode minKeyNode = null;
+  private IAVLNode maxKeyNode = null;
   
   /**
    * Constructs an empty tree with a virtual node as a root.
@@ -20,10 +22,12 @@ public class AVLTree {
    * Constructs a tree with a specific node as a root.
    */
   public AVLTree(IAVLNode root_node) {
-	  self.root = root_node;
-	  self.getRoot().setHeight(0);
-	  self.getRoot().setRight(AVLNode(-1, null, -1, this.getRoot(), 0));
-	  self.getRoot().setLeft(AVLNode(-1, null, -1, this.getRoot(), 0));
+	  this.root = root_node;
+	  this.getRoot().setHeight(0);
+	  this.getRoot().setRight(AVLNode(-1, null, -1, this.getRoot(), 0));
+	  this.getRoot().setLeft(AVLNode(-1, null, -1, this.getRoot(), 0));
+	  this.minKeyNode = node;
+	  this.maxKeyNode = node;
 	  updateSize(root_node);
   }
 
@@ -59,13 +63,33 @@ public class AVLTree {
    */
    public int insert(int k, String i) {
 	  IAVLNode new_node = AVLNode(k, i, 0, null, 1);
+	  return insert_node(new_node);
+   
+   /**
+    * Receives a node, and inserts it into the tree.
+    * @param node
+    * @pre node.isRealNode()
+    * @return -1 if an item with key node.getKey() already exists in the tree, 
+    *         otherwise the number of re-balancing operations, or 0 if no re-balancing operations were necessary.
+    */
+   private int insert_node(IAVLNode node) {
+	  node.setRight(new AVLNode(-1, null, -1, r, 0));
+	  node.setLeft(new AVLNode(-1, null, -1, r, 0));
 	  if (this.isEmpty()) { 
-		  this.setRoot(new_node);
+		  this.setRoot(node);
 		  this.setHeight(0);
 		  this.getRoot().setRight(AVLNode(-1, null, -1, this.getRoot(), 0));
 		  this.getRoot().setLeft(AVLNode(-1, null, -1, this.getRoot(), 0));
+		  this.minKeyNode = node;
+		  this.maxKeyNode = node;
 		  updateSize(this.getRoot());
 		  return 0; //Does setting the new root's height should be counted as a rebalancing action?
+	  }
+	  if (this.maxKeyNode().getKey() < node.getKey()) { //Update maxKeyNode field if neccessary. 
+		  this.maxKeyNode = node;
+	  }
+	  if (this.minKeyNode().getKey() > node.getKey()) { //Update minKeyNode field if neccessary. 
+		  this.minKeyNode = node;
 	  }
 	  IAVLNode r = this.getRoot();
 	  if (this.is_key_in_tree(r.key)) { //If the key is already in the tree, we return -1 and do not implement changes to the tree.
@@ -75,7 +99,7 @@ public class AVLTree {
 		  int current_node_key = r.getKey();
 		  if (r.getKey() > k) {
 			  if (!(r.getLeft().isRealNode())) {
-				  r.setLeft(new_node);
+				  r.setLeft(node);
 				  r.getLeft().setParent(r);
 				  r = r.getLeft();
 				  break;
@@ -84,7 +108,7 @@ public class AVLTree {
 		  }
 		  if (r.getKey() < k) {
 			  if (!(r.getRight().isRealNode())) {
-				  r.setRight(new_node);
+				  r.setRight(node);
 				  r.getRight().setParent(r);
 				  r = r.getRight();
 				  break;
@@ -92,8 +116,7 @@ public class AVLTree {
 			  r = r.getRight();
 		  }
 	  }
-	  r.setRight(new AVLNode(-1, null, -1, r, 0));
-	  r.setLeft(new AVLNode(-1, null, -1, r, 0));
+	  new_node_pointer = r;
 	  while(r != null) { //Update node sizes from bottom to top.
 		  updateSize(r);
 		  r = r.getParent();
@@ -101,6 +124,7 @@ public class AVLTree {
 	  int right_rank_difference = 0;
 	  int left_rank_difference = 0;
 	  int rebalancing_action_counter = 0;
+	  r = new_node_pointer;
 	  while(r.getParent() != null) {
 		  r = r.getParent();
 		  right_rank_difference = r.getHeight() - r.getRight().getHeight(); 
@@ -223,30 +247,20 @@ public class AVLTree {
    public int delete(int k)
    {
 	   return 421;	// to be replaced by student code
-   }
-
-   /**
-    * public String min()
-    *
-    * Returns the info of the item with the smallest key in the tree,
-    * or null if the tree is empty.
-    * 
-    */
-   public String min()
-   {
-	   IAVLNode r = this.getRoot();
-	   if (this.isEmpty()){
-		   return null;
-	   }
-	   while(r.getLeft().isRealNode()) {
-		   r = r.getLeft();
-	   }
-	   return r.getValue();
-   }
-	
-	   
+   }  
    
-
+  /**
+   * public String min()
+   *
+   * Returns the info of the item with the smallest key in the tree,
+   * or null if the tree is empty.
+   * 
+   */
+  public String min()
+  {
+	   return this.minKeyNode().getValue();
+  }
+     
    /**
     * public String max()
     *
@@ -255,8 +269,9 @@ public class AVLTree {
     */
    public String max()
    {
-	   return "maxDefaultString"; // to be replaced by student code
+	   return this.maxKeyNode().getValue();
    }
+   
 
   /**
    * public int[] keysToArray()
@@ -275,7 +290,7 @@ public class AVLTree {
    * @return A sorted array of the keys in it's subtree. 
    * Used as a util for keysToArray method.
    */
-  private int[] sorted_key_array(IAVLNode r) {
+  private int[] sortedKeyArray(IAVLNode r) {
 	  if (!(r.isRealNode())){ //If we reached a virtual node, we return an empty array.
 		  return new int[0] ;
 	  }
@@ -399,6 +414,38 @@ public class AVLTree {
    {
 	   return null;
    }
+   
+   private static void print2DUtil(IAVLNode node, int space)
+   {
+		int COUNT = 10;
+	    // Base case
+	    if (!(node.IsRealNode()){
+	        return;
+	    }
+	 
+	    // Increase distance between levels
+	    space += COUNT;
+	 
+	    // Process right child first
+	    print2DUtil(node.getRight(), space);
+	 
+	    // Print current node after space
+	    // count
+	    System.out.print("\n");
+	    for (int i = COUNT; i < space; i++)
+	        System.out.print(" ");
+	    System.out.print(node.getValue() + "\n");
+	 
+	    // Process left child
+	    print2DUtil(root.getLeft(), space);
+	}
+	 
+	// Wrapper over print2DUtil()
+	public static void print2D()
+	{
+	    // Pass initial space count as 0
+	    print2DUtil(this.getRoot, 0);
+	}
 
 	/** 
 	 * public interface IAVLNode
@@ -433,10 +480,11 @@ public class AVLTree {
 	  	private IAVLNode left = null;
 	  	private IAVLNode right = null;
 	  	private IAVLNode parent = null;
+	  	
 	  	  	
 	  	public AVLNode(int key, String value, int height, IAVLNode parent) {
 	  		this.key = key;
-	  		assert (!((key == -1)&&(height != -1)) && !((key != -1)&&(height == -1))); 
+	  		assert (!((key == -1)&&(height != -1)) && !((key != -1)&&(height == -1)) && !((key == -1)&&(height != 0))); 
 	  		this.value = value;
 	  		this.height = height;
 	  		this.parent = parent;
