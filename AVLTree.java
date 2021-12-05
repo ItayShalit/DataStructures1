@@ -121,14 +121,20 @@ public class AVLTree {
 		  updateSize(r);
 		  r = r.getParent();
 	  }
+	  return rebalance(new_node_pointer);
+  /**
+   * Receives a node in the tree and rebalances the tree from the node and up.
+   * @param node - A node within the tree.
+   * @return The number of rebalancing actions needed.
+   */
+  private int rebalance(IAVLNode node) {
 	  int right_rank_difference = 0;
 	  int left_rank_difference = 0;
 	  int rebalancing_action_counter = 0;
-	  r = new_node_pointer;
-	  while(r.getParent() != null) {
-		  r = r.getParent();
-		  right_rank_difference = r.getHeight() - r.getRight().getHeight(); 
-		  left_rank_difference = r.getHeight() - r.getLeft().getHeight(); 
+	  while(node.getParent() != null) {
+		  node = node.getParent();
+		  right_rank_difference = node.getHeight() - node.getRight().getHeight(); 
+		  left_rank_difference = node.getHeight() - node.getLeft().getHeight(); 
 		  boolean one_and_two_state = (right_rank_difference == 1)&&(left_rank_difference == 2);
 		  boolean two_and_one_state = (right_rank_difference == 2)&&(left_rank_difference == 1);
 		  boolean one_and_one_state = (right_rank_difference == 1)&&(left_rank_difference == 1);
@@ -138,50 +144,50 @@ public class AVLTree {
 			  break;
 		  }
 		  if (right_rank_difference + left_rank_difference == 1){ //If one rank difference is 1 and the other is 0.
-			  r.setHeight(r.getHeight() + 1);
+			  node.setHeight(node.getHeight() + 1);
 			  rebalancing_action_counter += 1;
 			  continue;
 		  }
 		  if (two_and_zero_state) {
-			  if (r.getLeft().getHeight() - r.getLeft().getRight().getHeight() == 2){
-				  r.getLeft().setHeight(r.getLeft().getHeight() + 1);
-				  rotation(r, 'r'); //Making a single rotation, and afterwards changing ranks accordingly.
-				  updateSize(r);
-				  r = r.getParent();
-				  updateSize(r);
+			  if (node.getLeft().getHeight() - node.getLeft().getRight().getHeight() == 2){
+				  node.getLeft().setHeight(node.getLeft().getHeight() + 1);
+				  rotation(node, 'r'); //Making a single rotation, and afterwards changing ranks accordingly.
+				  updateSize(node);
+				  node = node.getParent();
+				  updateSize(node);
 				  rebalancing_action_counter += 2; //One for rotation and one for rank update.
 			  }
 			  else { //If r.getLeft().getHeight() - r.getLeft().getRight().getHeight() == 1
-				  rotation(r.getLeft(), 'l'); //Making a double rotation, and afterwards changing ranks accordingly.
-				  rotation(r, 'r');
-				  r.setHeight(r.getHeight() - 1);
-				  updateSize(r);
-				  r.getParent().setHeight(r.getParent().getHeight() + 1);
-				  updateSize(r.getParent());
-				  r.getParent().getLeft().setHeight(r.getParent().getLeft().getHeight() - 1);
-				  updateSize(r.getParent().getLeft());
+				  rotation(node.getLeft(), 'l'); //Making a double rotation, and afterwards changing ranks accordingly.
+				  rotation(node, 'r');
+				  node.setHeight(node.getHeight() - 1);
+				  updateSize(node);
+				  node.getParent().setHeight(node.getParent().getHeight() + 1);
+				  updateSize(node.getParent());
+				  node.getParent().getLeft().setHeight(node.getParent().getLeft().getHeight() - 1);
+				  updateSize(node.getParent().getLeft());
 				  rebalancing_action_counter += 4; //One for rotation and three for rank updates.
 			  }	  
 			  break;
 		  }
 		  if (zero_and_two_state) {
-			  if (r.getRight().getHeight() - r.getRight().getLeft().getHeight() == 2){
-				  r.getRight().setHeight(r.getRight().getHeight() + 1);
-				  rotation(r, 'l'); //Making a single rotation, and afterwards changing ranks accordingly.
-				  updateSize(r);
-				  r = r.getParent();
-				  updateSize(r);
+			  if (node.getRight().getHeight() - node.getRight().getLeft().getHeight() == 2){
+				  node.getRight().setHeight(node.getRight().getHeight() + 1);
+				  rotation(node, 'l'); //Making a single rotation, and afterwards changing ranks accordingly.
+				  updateSize(node);
+				  node = node.getParent();
+				  updateSize(node);
 				  rebalancing_action_counter += 2; //One for rotation and one for rank update.
 			  }
 			  else { //If r.getRight().getHeight() - r.getRight().getLeft().getHeight() == 1
-				  rotation(r.getRight(), 'r'); //Making a double rotation, and afterwards changing ranks accordingly.
-				  rotation(r, 'l');
-				  r.setHeight(r.getHeight() - 1);
-				  updateSize(r);
-				  r.getParent().setHeight(r.getParent().getHeight() + 1);
-				  updateSize(r.getParent());
-				  r.getParent().getLeft().setHeight(r.getParent().getLeft().getHeight() - 1);
-				  updateSize(r.getParent().getRight());
+				  rotation(node.getRight(), 'r'); //Making a double rotation, and afterwards changing ranks accordingly.
+				  rotation(node, 'l');
+				  node.setHeight(node.getHeight() - 1);
+				  updateSize(node);
+				  node.getParent().setHeight(node.getParent().getHeight() + 1);
+				  updateSize(node.getParent());
+				  node.getParent().getLeft().setHeight(node.getParent().getLeft().getHeight() - 1);
+				  updateSize(node.getParent().getRight());
 				  rebalancing_action_counter += 4; //One for rotation and three for rank updates.
 			  }	
 			  break;
