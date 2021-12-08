@@ -14,7 +14,7 @@ import java.util.Set; //Remove before hand in
  *
  */
 
-public class AVLTree {
+public class AVLTreeMod {
   private IAVLNode root;
   private IAVLNode minKeyNode = null;
   private IAVLNode maxKeyNode = null;
@@ -22,7 +22,7 @@ public class AVLTree {
   /**
    * Constructs an empty tree with a virtual node as a root.
    */
-  public AVLTree() {
+  public AVLTreeMod() {
 	  this.root = new AVLNode(-1, null, -1, null, 0);
   }
   
@@ -30,7 +30,7 @@ public class AVLTree {
    * Constructs a tree with a specific real node as a root.
    * @pre root_node.isRealNode().
    */
-  public AVLTree(IAVLNode root_node) {
+  public AVLTreeMod(IAVLNode root_node) {
 	  if (root_node == null) {
 		  root_node = new AVLNode(-1, null, -1, null, 0);
 	  }
@@ -44,8 +44,8 @@ public class AVLTree {
 		  }
 		  else {
 			  updateSize(root_node);
-			  this.minKeyNode = this.Select(0);
-			  this.maxKeyNode = this.Select(this.root.getSize() - 1);
+			  this.minKeyNode = this.Select(this.root, 0);
+			  this.maxKeyNode = this.Select(this.root, this.root.getSize() - 1);
 		  }
 		  this.getRoot().setParent(null);
 	  }
@@ -129,32 +129,64 @@ public class AVLTree {
 	  if (this.search_node_by_key(node.getKey()) != null) { //If the key is already in the tree, we return -1 and do not implement changes to the tree.
 		  return -1;
 	  }
-	  IAVLNode r = this.getRoot();
-	  while (true) {
-		  if (r.getKey() > node.getKey()) {
-			  if (!(r.getLeft().isRealNode())) {
-				  r.setLeft(node);
-				  node.setParent(r);
-				  r = r.getLeft();
-				  break;
-			  }
-			  r = r.getLeft();
+	  
+	  IAVLNode r = this.maxKeyNode;
+	  int counter = 0;
+	  while(r.getKey() > node.getKey()) {
+		  counter++;
+		  if ((r.getParent() != null) && (r.getParent().getRight() == r)) {
+			  r = r.getParent(); 
+              continue;
 		  }
-		  if (r.getKey() < node.getKey()) {
-			  if (!(r.getRight().isRealNode())) {
-				  r.setRight(node);
-				  node.setParent(r);
-				  r = r.getRight();
-				  break;
+          else {
+        	  break; //go to left subtree of r with a regular insert.
+          }
+	  }
+	  IAVLNode parent = r;
+	  if (r.getKey() <= node.getKey()) { //else ((r.getParent() == null) || (r.getParent().getLeft() == r))
+		  r = r.getRight(); //go the to left subtree of r's right son with a regular insert, unless the right son does not exist, and then set as right son.
+	  }
+	  if (!(r.isRealNode())) {
+		  counter++;
+		  node.setParent(parent);
+		  parent.setRight(node);
+		  r.setParent(null);
+	  }
+	  else { //go to left subtree of r with a regular insert.  
+		  while(true) {
+			  counter++;
+			  if (node.getKey() > r.getKey()) {
+				  if (r.getRight().isRealNode()) {
+					  r = r.getRight();
+					  continue;
+				  }
+				  else { 
+					  counter++;
+					  r.setRight(node);
+					  node.setParent(r);
+					  r = r.getRight();
+				  }
 			  }
-			  r = r.getRight();
-		  }
+			  else { //node.getKey() < r.getKey()
+				  if (r.getLeft().isRealNode()) {
+					  r = r.getLeft();
+					  continue;
+				  }
+				  else {
+					  counter++;
+					  r.setLeft(node);
+					  node.setParent(r);
+					  r = r.getLeft();
+				  }
+			  }
+		  }  
 	  }
 	  while(r != null) { //Update node sizes from bottom to top.
 		  updateSize(r);
 		  r = r.getParent();
 	  }
-	  return rebalance(node);
+	  rebalance(node);
+	  return counter;
    }
 	  
 	  
@@ -402,16 +434,16 @@ public class AVLTree {
 			   p.setLeft(v);
 		   }
 		   n = balanceRec(p);
-		   maxKeyNode = Select(size() - 1);
-		   minKeyNode = Select(0);
+		   maxKeyNode = Select(root, size() - 1);
+		   minKeyNode = Select(root, 0);
 		   return n;
 	   }
 	   else if(!(r.isRealNode())) { // x has only one child, l		   
 		   if(root == x) {
 			   root = l;
 			   l.setParent(null);
-			   maxKeyNode = Select(size() - 1);
-			   minKeyNode = Select(0);
+			   maxKeyNode = Select(root, size() - 1);
+			   minKeyNode = Select(root, 0);
 			   return 0;
 		   }
 		   // x is not the root :
@@ -423,16 +455,16 @@ public class AVLTree {
 			   p.setLeft(l);
 			   }
 		   n = balanceRec(p);
-		   maxKeyNode = Select(size() - 1);
-		   minKeyNode = Select(0);
+		   maxKeyNode = Select(root, size() - 1);
+		   minKeyNode = Select(root, 0);
 		   return n;
 	   }
 	   else if(!(l.isRealNode())) { // x has only one child, r	   
 		   if(root == x) {
 			   root = r;
 			   r.setParent(null);
-			   maxKeyNode = Select(size() - 1);
-			   minKeyNode = Select(0);
+			   maxKeyNode = Select(root, size() - 1);
+			   minKeyNode = Select(root, 0);
 			   return 0;
 		   }
 		   // x is not the root : 
@@ -444,8 +476,8 @@ public class AVLTree {
 			   p.setLeft(r);
 			   }
 		   n = balanceRec(p);
-		   maxKeyNode = Select(size() - 1);
-		   minKeyNode = Select(0);
+		   maxKeyNode = Select(root, size() - 1);
+		   minKeyNode = Select(root, 0);
 		   return n;
 		   }
 	   
@@ -486,8 +518,8 @@ public class AVLTree {
 			   }
 		   }
 		   n = balanceRec(y_parent);
-		   maxKeyNode = Select(size() - 1);
-		   minKeyNode = Select(0);
+		   maxKeyNode = Select(root, size() - 1);
+		   minKeyNode = Select(root, 0);
 		   return n;
 	   	 }
 	  }
@@ -518,11 +550,16 @@ public class AVLTree {
 		   }
 	   }
 	   
+	   
+	   
+	   
 	   /**
-	    * @pre : the tree is not empty, and 0 <= i <= size() - 1
+	    * precondition : the tree is not empty, and 0 <= i <= size() -1
 	    */
-	   private IAVLNode Select(int i) { // return the i's element in the tree which has x as a root
-		   IAVLNode x = this.minKeyNode;
+	   private IAVLNode Select(IAVLNode x, int i) { // return the i's element in the tree which has x as a root
+		   while(x.getLeft().isRealNode()) { //Get to the node with the minimal key in the subtree of x.
+			   x = x.getLeft();
+		   }
 		   while (x.getSize() < i) { //Get to a subtree the has an O(i) leaves, and contains the i smallest leaves of the subtree.
 			   x = x.getParent();
 		   }
